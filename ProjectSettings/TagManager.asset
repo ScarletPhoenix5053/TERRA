@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Fault Node Container
+  - Fault Line Container
+  - Fault Node
+  - Fault Line
+  - Base Collider
   layers:
   - Default
   - TransparentFX
@@ -13,8 +18,8 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
+  - Interactable Base
+  - Node
   - 
   - 
   - 

@@ -20,6 +20,7 @@ namespace SCARLET.TERRA
     internal static class ResourcePath
     {
         public const string FaultNode = "Fault Node";
+        public const string FaultLine = "Fault Line";
 
         public const string FaultMaterial = "FaultMaterial";
         public const string FaultMaterial1 = "FaultMaterial1";

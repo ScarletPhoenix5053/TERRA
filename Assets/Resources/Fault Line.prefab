@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9199379324558539617}
   - component: {fileID: 9199379324558539622}
   - component: {fileID: 9199379324558539623}
+  - component: {fileID: 4053149643547535745}
   m_Layer: 0
   m_Name: Fault Line
   m_TagString: Untagged
@@ -48,6 +49,7 @@ MonoBehaviour:
   NodeB: {fileID: 0}
   LineRenderer: {fileID: 9199379324558539623}
   PointOffset: {x: 0, y: 0.05, z: 0}
+  MeshCollider: {fileID: 4053149643547535745}
 --- !u!120 &9199379324558539623
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -143,3 +145,17 @@ LineRenderer:
     generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 0
+--- !u!64 &4053149643547535745
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9199379324558539620}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 0
+  m_Mesh: {fileID: 0}

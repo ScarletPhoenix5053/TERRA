@@ -11,13 +11,18 @@ namespace SCARLET.TERRA
 
         public TectonicFaultMap FaultMap;
 
+        private Material FaultMaterialDefault => Resources.Load<Material>(ResourcePath.FaultMaterial1);
+        private Material FaultMaterialHighlighted => Resources.Load<Material>(ResourcePath.FaultMaterial2);
+
+
+
         private TectonicFaultNode selectedNode;
         private void SelectNode(TectonicFaultNode node)
         {
             Selection = SelectionState.SingleNode;
 
             selectedNode = node;
-            selectedNode.Material = Resources.Load<Material>(ResourcePath.FaultMaterial2);
+            selectedNode.Material = FaultMaterialHighlighted;
 
         }
         private void DeselectNode()
@@ -25,38 +30,13 @@ namespace SCARLET.TERRA
             Selection = SelectionState.Nothing;
             if (selectedNode == null) return;
 
-            selectedNode.Material = Resources.Load<Material>(ResourcePath.FaultMaterial1);
+            selectedNode.Material = FaultMaterialDefault;
             selectedNode = null;
         }
 
         public int ScatterNodesMax = 16;
         public float ScatterNodesMinSpacing = 1f;
         public Vector3 ScatterNodesArea = new Vector3(10, 0, 10);
-
-        private static List<string> DetectionLayerNames_Default = new List<string>()
-        {
-            LayerNames.InteractactableBase,
-            LayerNames.Node
-        };
-        public List<string> DetectionLayerNames = DetectionLayerNames_Default;
-        public LayerMask DetectionLayers;
-        private void UpdateDetectionLayers() => DetectionLayers = LayerMask.GetMask(DetectionLayerNames.ToArray());
-        private void AddDetectionLayer(string layerName)
-        {
-            if (!DetectionLayerNames.Contains(layerName)) DetectionLayerNames.Add(layerName);
-            UpdateDetectionLayers();
-        }
-        private void RemoveDetectionLayer(string layerName)
-        {
-            if (DetectionLayerNames.Contains(layerName)) DetectionLayerNames.Remove(layerName);
-            UpdateDetectionLayers();
-        }
-        private void RestoreDetectionLayers()
-        {
-            DetectionLayerNames = DetectionLayerNames_Default;
-            UpdateDetectionLayers();
-        }
-
         public void GenerateNodeField()
         {
             // Build and array of points, limited by a maxCount and minDist
@@ -93,9 +73,121 @@ namespace SCARLET.TERRA
 
         }
 
+
+
+        private TectonicFaultLine lastDetectedLink;
+        private TectonicFaultLine selectedLink;
+        private void SelectLink(TectonicFaultLine link)
+        {
+            Selection = SelectionState.SingleLink;
+
+            selectedLink = link;
+            selectedLink.Material = FaultMaterialHighlighted;
+        }
+        private void DeselectLink()
+        {
+            Selection = SelectionState.Nothing;
+            if (selectedLink == null) return;
+
+            selectedLink.Material = FaultMaterialDefault;
+            selectedLink = null;
+        }
+        
+        #endregion
+
+        #region OBJECT DETECTION
+
+        private static List<string> DetectionLayerNames_Default = new List<string>()
+        {
+            LayerNames.InteractactableBase,
+            LayerNames.Node
+        };
+        public List<string> DetectionLayerNames = DetectionLayerNames_Default;
+        public LayerMask DetectionLayers;
+        private void UpdateDetectionLayers() => DetectionLayers = LayerMask.GetMask(DetectionLayerNames.ToArray());
+        private void AddDetectionLayer(string layerName)
+        {
+            if (!DetectionLayerNames.Contains(layerName)) DetectionLayerNames.Add(layerName);
+            UpdateDetectionLayers();
+        }
+        private void RemoveDetectionLayer(string layerName)
+        {
+            if (DetectionLayerNames.Contains(layerName)) DetectionLayerNames.Remove(layerName);
+            UpdateDetectionLayers();
+        }
+        private void RestoreDetectionLayers()
+        {
+            DetectionLayerNames = DetectionLayerNames_Default;
+            UpdateDetectionLayers();
+        }
+
+
+        public float SelectionSphereRadius = 0.5f;
+        private enum TargetType
+        {
+            Invalid,
+            Empty,
+            Node,
+            Line,
+            Plate
+        }
+        private TargetType GetMouseTarget(out RaycastHit hitData)
+        {
+            hitData = default;
+            TargetType targetType = TargetType.Invalid;
+
+            // See if the mouse is on/near anything important
+            RaycastHit[] castHits = CastForTargets();
+
+            // If anything was hit
+            if (castHits.Length > 0)
+            {
+                for (int i = 0; i < castHits.Length; i++)
+                {
+                    hitData = castHits[i];
+
+                    // Determine type of target hit
+                    if (hitData.transform.tag == Tags.TectonicNode) targetType = TargetType.Node;
+                    else if (hitData.transform.tag == Tags.TectonicLink) targetType = TargetType.Line;
+                    else continue;
+
+                    return targetType;
+                }
+                // did not find a layer of interest, must have been a base layer
+
+                // Additional check for fault lines
+                var links = FaultMap.Links;
+                var selectionSphere = new Sphere(hitData.point, SelectionSphereRadius);
+                foreach (TectonicFaultLine link in links)
+                {
+                    var linkLine = new Line(link.NodeA.CardinalPos, link.NodeB.CardinalPos);
+                    if (Geometry.LineIntersectsSphere(linkLine, selectionSphere))
+                    {
+                        // Found a fault line
+                        lastDetectedLink = link;
+                        return TargetType.Line;
+                    }
+                }
+
+                return TargetType.Empty;
+            }
+            // else must not have found any targets.
+            else return targetType;
+        }
+        private RaycastHit[] CastForTargets()
+        {
+            var screenToPoint = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            // Check using physics setup
+            var castHits = Physics.RaycastAll(screenToPoint, Mathf.Infinity, DetectionLayers);
+
+            return castHits;
+        }
+
         #endregion
 
         #region Input - MOVE TO INPUT OBJECT LATER
+        // Will have to remove all logic from update. Plan this step well.
 
         private struct PlayerInput
         {
@@ -115,7 +207,7 @@ namespace SCARLET.TERRA
         #endregion
 
         #region INTERFACE STATE
-
+        
         public enum Tool
         {
             EditNodes,
@@ -126,6 +218,7 @@ namespace SCARLET.TERRA
         {
             ActiveTool = newTool;
             DeselectNode();
+            DeselectLink();
             RestoreDetectionLayers();
         }
         public void SetTool(string toolName)
@@ -135,7 +228,7 @@ namespace SCARLET.TERRA
                 SetTool(newTool);
             }
         }
-
+        
         public enum SelectionState
         {
             Nothing,
@@ -143,44 +236,7 @@ namespace SCARLET.TERRA
             SingleLink
         }
         public SelectionState Selection = SelectionState.Nothing;
-
-        private enum TargetType
-        {
-            Invalid,
-            Empty,
-            Node,
-            Line,
-            Plate
-        }
-        private TargetType GetMouseTarget(out RaycastHit hitData)
-        {
-            hitData = default;
-            TargetType targetType = TargetType.Invalid;
-
-            var screenToPoint = Camera.main.ScreenPointToRay(Input.mousePosition);
-            var castHits = Physics.RaycastAll(screenToPoint, Mathf.Infinity, DetectionLayers);
-
-            // If anything was hit
-            if (castHits.Length > 0)
-            {
-                for (int i = 0; i < castHits.Length; i++)
-                {
-                    hitData = castHits[i];
-
-                    // Determine type of target hit
-                    if (hitData.transform.tag == Tags.TectonicNode) targetType = TargetType.Node;
-                    if (hitData.transform.tag == Tags.TectonicLink) targetType = TargetType.Line;
-                    else continue;
-
-                    return targetType;
-                }
-                // did not find a layer of interest, must have been a base layer
-                return TargetType.Empty;
-            }
-            // else must not have found any targets.
-            else return targetType;
-        }
-
+        
         #endregion
 
         #region Runtime Messages
@@ -270,6 +326,7 @@ namespace SCARLET.TERRA
                             if (PrimaryInput.Down)
                             {
                                 if (mouseTarget == TargetType.Node) SelectNode(hit.transform.GetComponent<TectonicFaultNode>());
+                                else if (mouseTarget == TargetType.Line) SelectLink(lastDetectedLink);
                             }
                             break;
 
@@ -288,6 +345,29 @@ namespace SCARLET.TERRA
                                     DeselectNode();
                                     SelectNode(otherNode);
                                 }
+                            }
+                            else if (SecondaryInput.Down)
+                            {
+                                DeselectNode();
+                                DeselectLink();
+                            }
+                            break;
+
+                        case SelectionState.SingleLink:
+                            if (PrimaryInput.Down || SecondaryInput.Down)
+                            {
+                                // Desel
+                                if (PrimaryInput.Down && mouseTarget != TargetType.Node)
+                                    DeselectLink();
+                            }
+                            else if (SecondaryInput.Down)
+                            {
+                                DeselectLink();
+                            }
+                            else if (DelInput.Down)
+                            {
+                                FaultMap.RemoveLink(selectedLink);
+                                DeselectLink();
                             }
                             break;
 

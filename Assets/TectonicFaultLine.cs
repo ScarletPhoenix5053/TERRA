@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace SCARLET.TERRA
 {
@@ -9,18 +9,25 @@ namespace SCARLET.TERRA
         public TectonicFaultNode NodeB;        
 
         public LineRenderer LineRenderer;
-        public Vector3 PointOffset = new Vector3(0,0.05f,0);
-
-        
-
-        public Material Material {
+        public Material Material
+        {
             get => LineRenderer != null ? LineRenderer.material : null;
             set => LineRenderer.material = LineRenderer != null ? value : LineRenderer.material;
         }
 
+        public Vector3 PointOffset = new Vector3(0,0.05f,0);
+
+        public MeshCollider MeshCollider;
+        public Mesh Mesh
+        {
+            get => MeshCollider.sharedMesh;
+            set => MeshCollider.sharedMesh = value;
+        }
+        
         public void UpdateLine()
         {
-            if (NodeA != null
+            if (LineRenderer != null
+                && NodeA != null
                 && NodeB != null)
             {
                 LineRenderer.positionCount = 2;
@@ -28,5 +35,29 @@ namespace SCARLET.TERRA
                 LineRenderer.SetPosition(1, NodeB.CardinalPos + PointOffset);
             }
         }
+
+        public override bool Equals(object other)
+        {
+            var line = other as TectonicFaultLine;
+
+            return !ReferenceEquals(null, line)
+                && NodeA.Equals(line.NodeA)
+                && NodeB.Equals(line.NodeB);
+        }
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                const int hashingBase = (int)2166136261;
+                const int hashingMultiplier = 16777619;
+
+                int hash = hashingBase;
+                hash = (hash * hashingMultiplier) ^ (!ReferenceEquals(null, NodeA) ? NodeA.GetHashCode() : 0);
+                hash = (hash * hashingMultiplier) ^ (!ReferenceEquals(null, NodeB) ? NodeB.GetHashCode() : 0);
+
+                return hash;
+            }
+        }
+
     }
 }

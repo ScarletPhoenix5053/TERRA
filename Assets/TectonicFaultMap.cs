@@ -36,7 +36,7 @@ namespace SCARLET.TERRA
             
             for (int i = 0; i < NodeContainer.childCount; i++)
             {
-                if (NodeContainer.GetChild(i).GetComponent<TectonicFaultNode>().CardinalPos == node.CardinalPos)
+                if (NodeContainer.GetChild(i).GetComponent<TectonicFaultNode>() == node)
                 {
                     Destroy(NodeContainer.GetChild(i).gameObject);
                     break;
@@ -62,12 +62,36 @@ namespace SCARLET.TERRA
             if (LinkContainer == null) throw new TERRAException("LinkContainer is not set to anything");
         }
 
+        public TectonicFaultLine[] Links
+        {
+            get
+            {
+                var links = new TectonicFaultLine[LinkContainer.childCount];
+                for (int i = 0; i < links.Length; i++)
+                    links[i] = LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>();
+                
+                return links;
+            }
+        }
         public void AddLink(TectonicFaultLine faultLine)
         {
             ValidateLinkContainer();
 
             faultLine.name = "Fault Line #" + LinkContainer.childCount.ToString().PadLeft(3, '0');
             faultLine.transform.parent = LinkContainer;
+        }
+        public void RemoveLink(TectonicFaultLine faultLine)
+        {
+            ValidateLinkContainer();
+
+            for (int i = 0; i < LinkContainer.childCount; i++)
+            {
+                if (LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>() == faultLine)
+                {
+                    Destroy(LinkContainer.GetChild(i).gameObject);
+                    break;
+                }
+            }
         }
 
         #endregion

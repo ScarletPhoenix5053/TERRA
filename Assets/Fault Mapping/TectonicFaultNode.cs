@@ -43,6 +43,7 @@ namespace SCARLET.TERRA
                     Links.Remove(link);
             }
         }
+        
 
         public override bool Equals(object other)
         {

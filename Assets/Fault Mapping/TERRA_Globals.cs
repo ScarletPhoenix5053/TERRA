@@ -14,7 +14,8 @@ namespace SCARLET.TERRA
     }
     internal static class LayerNames
     {
-        public const string InteractactableBase = "Interactable Base";
+        public const string DetectionLayer = "Input Detection";
+        public const string InteractionLayer = "Interactable";
         public const string Node = "Node";
     }
     internal static class ResourcePath

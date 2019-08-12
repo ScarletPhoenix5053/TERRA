@@ -5,7 +5,7 @@ using Random = UnityEngine.Random;
 
 namespace SCARLET.TERRA
 {
-    public class TectonicSimulationInterface : MonoBehaviour
+    public class TectonicSimulation : MonoBehaviour
     {
         #region FAULT MAP INTERACTIONS
 
@@ -14,24 +14,22 @@ namespace SCARLET.TERRA
         private Material FaultMaterialDefault => Resources.Load<Material>(ResourcePath.FaultMaterial1);
         private Material FaultMaterialHighlighted => Resources.Load<Material>(ResourcePath.FaultMaterial2);
 
-
-
-        private TectonicFaultNode selectedNode;
-        private void SelectNode(TectonicFaultNode node)
+               
+        public void SelectNode(TectonicFaultNode node)
         {
             Selection = SelectionState.SingleNode;
 
-            selectedNode = node;
-            selectedNode.Material = FaultMaterialHighlighted;
+            SelectedNode = node;
+            SelectedNode.Material = FaultMaterialHighlighted;
 
         }
-        private void DeselectNode()
+        public void DeselectNode()
         {
             Selection = SelectionState.Nothing;
-            if (selectedNode == null) return;
+            if (SelectedNode == null) return;
 
-            selectedNode.Material = FaultMaterialDefault;
-            selectedNode = null;
+            SelectedNode.Material = FaultMaterialDefault;
+            SelectedNode = null;
         }
 
         public int ScatterNodesMax = 16;
@@ -76,21 +74,21 @@ namespace SCARLET.TERRA
 
 
         private TectonicFaultLine lastDetectedLink;
-        private TectonicFaultLine selectedLink;
-        private void SelectLink(TectonicFaultLine link)
+        public TectonicFaultLine SelectedLink;
+        public void SelectLink(TectonicFaultLine link)
         {
             Selection = SelectionState.SingleLink;
 
-            selectedLink = link;
-            selectedLink.Material = FaultMaterialHighlighted;
+            SelectedLink = link;
+            SelectedLink.Material = FaultMaterialHighlighted;
         }
-        private void DeselectLink()
+        public void DeselectLink()
         {
             Selection = SelectionState.Nothing;
-            if (selectedLink == null) return;
+            if (SelectedLink == null) return;
 
-            selectedLink.Material = FaultMaterialDefault;
-            selectedLink = null;
+            SelectedLink.Material = FaultMaterialDefault;
+            SelectedLink = null;
         }
         
         #endregion
@@ -99,7 +97,7 @@ namespace SCARLET.TERRA
 
         private static List<string> DetectionLayerNames_Default = new List<string>()
         {
-            LayerNames.InteractactableBase,
+            LayerNames.DetectionLayer,
             LayerNames.Node
         };
         public List<string> DetectionLayerNames = DetectionLayerNames_Default;
@@ -156,7 +154,7 @@ namespace SCARLET.TERRA
                 // did not find a layer of interest, must have been a base layer
 
                 // Additional check for fault lines
-                var links = FaultMap.Links;
+                var links = FaultMap.FaultLines;
                 var selectionSphere = new Sphere(hitData.point, SelectionSphereRadius);
                 foreach (TectonicFaultLine link in links)
                 {
@@ -207,27 +205,8 @@ namespace SCARLET.TERRA
         #endregion
 
         #region INTERFACE STATE
-        
-        public enum Tool
-        {
-            EditNodes,
-            FormLinks
-        }
-        public Tool ActiveTool = Tool.EditNodes;
-        public void SetTool(Tool newTool)
-        {
-            ActiveTool = newTool;
-            DeselectNode();
-            DeselectLink();
-            RestoreDetectionLayers();
-        }
-        public void SetTool(string toolName)
-        {
-            if (Enum.TryParse(toolName, out Tool newTool))
-            {
-                SetTool(newTool);
-            }
-        }
+
+        public TectonicFaultNode SelectedNode;
         
         public enum SelectionState
         {
@@ -247,6 +226,8 @@ namespace SCARLET.TERRA
         }
         private void Update()
         {
+            /*
+
             // Get target
             var mouseTarget = GetMouseTarget(
                 out RaycastHit hit
@@ -382,7 +363,7 @@ namespace SCARLET.TERRA
                 default:
                     break;                   
             }
-
+            */
         }
 
         #endregion

@@ -7,6 +7,7 @@ namespace SCARLET.TERRA
     {
         #region NODES
 
+        public List<TectonicFaultNode> Nodes = new List<TectonicFaultNode>();
         private Transform NodeContainer;
         private void GetNodeContainer()
         {
@@ -29,6 +30,8 @@ namespace SCARLET.TERRA
 
             node.name = "Fault Node #" + NodeContainer.childCount.ToString().PadLeft(3, '0');
             node.CardinalPos = pos;
+
+            Nodes.Add(node);
         }
         public void RemoveNode(TectonicFaultNode node)
         {
@@ -36,9 +39,25 @@ namespace SCARLET.TERRA
             
             for (int i = 0; i < NodeContainer.childCount; i++)
             {
-                if (NodeContainer.GetChild(i).GetComponent<TectonicFaultNode>() == node)
+                var thisNode = NodeContainer.GetChild(i).GetComponent<TectonicFaultNode>();
+                if (thisNode == node)
                 {
-                    Destroy(NodeContainer.GetChild(i).gameObject);
+                    Nodes.Remove(thisNode);
+                    
+                    var thisNodeLinks = thisNode.Links;
+                    Debug.Log(thisNodeLinks.Count);
+                    for (int j = thisNodeLinks.Count - 1; j >= 0; j--)
+                    {
+                        // Get affected nodes and remove their references to links
+                        var otherNode = thisNodeLinks[j].NodeOther(thisNode);
+                        otherNode.Links.Remove(thisNodeLinks[j]);
+
+                        // Remove the link
+                        RemoveLink(thisNodeLinks[j]);
+                    }
+                    
+                    Destroy(thisNode.gameObject);
+                    thisNode = null;
                     break;
                 }
             }
@@ -51,6 +70,7 @@ namespace SCARLET.TERRA
         #endregion
         #region LINKS
 
+        public List<TectonicFaultLine> FaultLines = new List<TectonicFaultLine>();
         private Transform LinkContainer;
         private void GetLinkContainer()
         {
@@ -62,16 +82,13 @@ namespace SCARLET.TERRA
             if (LinkContainer == null) throw new TERRAException("LinkContainer is not set to anything");
         }
 
-        public TectonicFaultLine[] Links
+        public TectonicFaultLine[] FindLinks()
         {
-            get
-            {
-                var links = new TectonicFaultLine[LinkContainer.childCount];
-                for (int i = 0; i < links.Length; i++)
-                    links[i] = LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>();
+            var links = new TectonicFaultLine[LinkContainer.childCount];
+            for (int i = 0; i < links.Length; i++)
+                links[i] = LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>();
                 
-                return links;
-            }
+            return links;
         }
         public void AddLink(TectonicFaultLine faultLine)
         {
@@ -79,6 +96,8 @@ namespace SCARLET.TERRA
 
             faultLine.name = "Fault Line #" + LinkContainer.childCount.ToString().PadLeft(3, '0');
             faultLine.transform.parent = LinkContainer;
+
+            FaultLines.Add(faultLine);
         }
         public void RemoveLink(TectonicFaultLine faultLine)
         {
@@ -86,12 +105,49 @@ namespace SCARLET.TERRA
 
             for (int i = 0; i < LinkContainer.childCount; i++)
             {
-                if (LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>() == faultLine)
+                var thisLine = LinkContainer.GetChild(i).GetComponent<TectonicFaultLine>();
+                if (thisLine == faultLine)
                 {
-                    Destroy(LinkContainer.GetChild(i).gameObject);
+                    thisLine.NodeA?.Links.Remove(thisLine);
+                    thisLine.NodeB?.Links.Remove(thisLine);
+
+                    FaultLines.Remove(thisLine);
+                    Destroy(thisLine.gameObject);
                     break;
                 }
             }
+        }
+
+        #endregion
+        #region PLATES
+
+        internal struct TectonicPlate
+        {
+            internal List<TectonicFaultLine> BoundaryLines;
+            internal Vector3 GetDirToBoundary(int i)
+            {
+                return BoundaryLines[i].CardinalPos - CardinalPos;
+            }
+
+            internal Vector3 CardinalPos
+            {
+                get
+                {
+                    var pos = Vector3.zero;
+                    foreach (TectonicFaultLine boundaryLine in BoundaryLines)
+                        pos += boundaryLine.CardinalPos;
+
+                    return pos;
+                }
+            }
+        }
+        internal List<TectonicPlate> Plates { get; private set; }
+        private void CheckPlates()
+        {
+            // Create new set of plates from scratch
+            Plates = new List<TectonicPlate>();
+
+            
         }
 
         #endregion

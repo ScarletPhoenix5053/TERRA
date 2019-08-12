@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 9199379324558539622}
   - component: {fileID: 9199379324558539623}
   - component: {fileID: 4053149643547535745}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Fault Line
-  m_TagString: Untagged
+  m_TagString: Fault Line
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

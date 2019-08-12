@@ -7,6 +7,12 @@ namespace SCARLET.TERRA
     {
         public TectonicFaultNode NodeA;
         public TectonicFaultNode NodeB;        
+        public TectonicFaultNode NodeOther(TectonicFaultNode main)
+        {
+            if (NodeA == main) return NodeB;
+            else if (NodeB == main) return NodeA;
+            else return null;
+        }
 
         public LineRenderer LineRenderer;
         public Material Material
@@ -16,6 +22,7 @@ namespace SCARLET.TERRA
         }
 
         public Vector3 PointOffset = new Vector3(0,0.05f,0);
+        public Vector3 CardinalPos => NodeA.CardinalPos + NodeB.CardinalPos;
 
         public MeshCollider MeshCollider;
         public Mesh Mesh
